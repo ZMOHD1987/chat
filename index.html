@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask Shjmun</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f7;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #e0f0d9;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 25px;
+            margin: 10px 5px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #chatHistory {
+            border: 1px solid #ddd;
+            background-color: #fafafa;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        h2 {
+            margin: 0;
+            color: #4CAF50;
+        }
+        .lang-switch {
+            display: flex;
+            gap: 10px;
+        }
+        .chat-entry {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+        .chat-entry:last-child {
+            border-bottom: none;
+        }
+        .chat-entry strong {
+            color: #4CAF50;
+        }
+        .rtl .chat-entry {
+            text-align: right;
+            direction: rtl;
+        }
+        .ltr .chat-entry {
+            text-align: left;
+            direction: ltr;
+        }
+        @media (max-width: 600px) {
+            button {
+                width: 100%;
+                margin: 5px 0;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .lang-switch {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 id="title">Ask Shjmun</h2>
+            <div class="lang-switch">
+                <button onclick="setLanguage('ar')">العربية</button>
+                <button onclick="setLanguage('en')">English</button>
+            </div>
+       </div>
+        <input type="text" id="searchField" placeholder="أدخل مصطلح البحث" list="questionsList">
+        <datalist id="questionsList">
+            <!-- Arabic default responses will be loaded here -->
+        </datalist>
+        <button id="generateButton">ارسال</button>
+        <button id="clearButton">مسح</button>
+        <button id="voiceInputButton">🎤</button>
+        <div id="chatHistory" class="rtl"></div>
+    </div>
+
+ </div>
+
+    <script>
+        const texts = {
+            ar: {
+                title: "Ask Shjmun",
+                placeholder: "أدخل مصطلح البحث",
+                send: "ارسال",
+                clear: "مسح",
+                defaultResponses: {
+                    "من انت": "أنا ذكاء اصطناعي للمساعدة.",
+                    "مرحبا": "مرحبا! كيف يمكنني مساعدتك اليوم؟",
+                    "السلام عليكم": "وعليكم السلام! كيف يمكنني مساعدتك؟",
+                    "سلام": "سلام! كيف يمكنني مساعدتك اليوم؟",
+                    "ما عملك": "أنا هنا لأساعدك في العثور على المعلومات التي تحتاجها.",
+                    "من صممك": "تم تصميمي من قبل فريق التطوير بإدارة الرقابة والسلامة الصحية.",
+                    "اهلا": "اهلا! كيف يمكنني مساعدتك اليوم؟",
+                    "كيف حالك": "أنا بخير، شكرًا! كيف يمكنني مساعدتك؟",
+                    "كيفك": "أنا بخير، شكرًا! كيف يمكنني مساعدتك؟"
+                },
+                answers: [
+                    { name: "خالد الحمادي", role: "رئيس قسم رقابة الأغذية" },
+                    { name: "محمد السويدي", role: "رئيس شعبة الاستيراد والتصدير" },
+                    { name: "علي سليمان", role: "رئيس شعبة تفتيش المنشآت الغذائية" },
+                    { name: "صالح السويدي", role: "مسؤول وحدة الترخيص" },
+                    { name: "صالح السويدي", role: "مسؤول وحدة المصانع" },
+                    { name: "بدر ناصر", role: "مسؤول وحدة الدراسات" },
+                    { name: "بدر ناصر", role: "مسؤول وحدة المزارع" },
+                    { name: "جمال المازمي", role: "مدير إدارة الرقابة والسلامة الصحية" },
+                    { name: "عادل عمر", role: "مدير قطاع الصحة العامة والمختبرات المركزية" },
+                    { name: "محمد الجسمي", role: "ظابط إداري" },
+                    { name: "محمد الجسمي", role: "رئيس فريق التطوير" },
+                    { key: "ترخيص مطعم", text: "اشتراطات الترخيص - أولاً، استخراج الاسم التجاري من التنمية الاقتصادية ومراجعة قسم الرقابة الغذائية بالناصرية مع المستندات الآتية: الاسم التجاري، سند الملكية، خارطة الأرض، المخطط الهندسي للبناء، والقيام بحجز موعد للتفتيش من قبل المفتش." },
+                    { key: "الرسوم", text: "250 درهم اقل من 50 متر مربع و500 درهم اكثر من 50 متر مربع رسوم معاينة 200 درهم لكل معاينة للمنشأة." },
+                    { key: "إجراءات تراخيص المنشآت الغذائية", text: [
+                        "استخراج الاسم التجاري + المستندات المطلوبة.",
+                        "التفتيش علي المنشآه.",
+                        "عمل مخطط مفصل للمنشأة.",
+                        "التوقيع علي تعهد.",
+                        "إصدار الموافقة النهائية.",
+                        "تحرير التصريح الصحي."
+                    ] }  // New key added with numbered list
+                ],
+                questionList: [
+                    "من انت",
+                    "مرحبا",
+                    "السلام عليكم",
+                    "سلام",
+                    "ما عملك",
+                    "من صممك",
+                    "اهلا",
+                    "كيف حالك",
+                    "كيفك",
+                    "إجراءات تراخيص المنشآت الغذائية"  // New entry added
+                ]
+            },
+            en: {
+                title: "Ask Shjmun",
+                placeholder: "Enter search term",
+                send: "Send",
+                clear: "Clear",
+                defaultResponses: {
+                    "who are you": "I am an AI assistant.",
+                    "hello": "Hello! How can I help you today?",
+                    "peace be upon you": "Peace be upon you! How can I assist you?",
+                    "peace": "Peace! How can I help you today?",
+                    "what's your job": "I am here to assist you in finding the information you need.",
+                    "who designed you": "I was designed by the development team at the Food Safety and Control Administration.",
+                    "hi": "Hi! How can I help you today?",
+                    "how are you": "I'm fine, thank you! How can I help you?",
+                    "how you doing": "I'm fine, thank you! How can I help you?",
+                    "how are you doing": "I'm fine, thank you! How can I help you?"
+                },
+                answers: [
+                    { name: "Khalid Al Hamadi", role: "Head of Food Control Department" },
+                    { name: "Mohammed Al Suwaidi", role: "Head of Import and Export Division" },
+                    { name: "Ali Suleiman", role: "Head of Food Establishments Inspection Division" },
+                    { name: "Saleh Al Suwaidi", role: "Licensing and Factories Unit Manager" },
+                    { name: "Badr Nasser", role: "Studies Unit Manager" },
+                    { name: "Jamal Al Mazmi", role: "Director of Food Safety and Control Department" },
+                    { name: "Adel Omar", role: "Director of Public Health and Central Laboratories Sector" },
+                    { key: "restaurant license", text: "License requirements - First, obtain the trade name from the Economic Development, then visit the Food Control Department at Al Nasseriah with the following documents: trade name, property deed, land map, building plan, and book an inspection appointment with the inspector." },
+                    { key: "fees", text: "250 AED for less than 50 square meters, 500 AED for more than 50 square meters, 200 AED inspection fee for each inspection." },
+                    { key: "Food Establishment Licensing", text: [
+                        "Obtain a commercial name + required documents.",
+                        "Inspection of the establishment.",
+                        "Prepare detailed plans for the establishment.",
+                        "Sign an undertaking.",
+                        "Issue final approval.",
+                        "Issue health permit."
+                    ] }  // New key added with numbered list
+                ],
+                questionList: [
+                    "who are you",
+                    "hello",
+                    "peace be upon you",
+                    "peace",
+                    "what's your job",
+                    "who designed you",
+                    "hi",
+                    "how are you",
+                    "how you doing",
+                    "how are you doing",
+                    "Food Establishment Licensing"  // New entry added
+                ]
+            }
+        };
+        let currentLanguage = 'ar';
+
+        function setLanguage(language) {
+            currentLanguage = language;
+
+            document.getElementById('title').innerText = texts[language].title;
+            document.getElementById('searchField').placeholder = texts[language].placeholder;
+            document.getElementById('generateButton').innerText = texts[language].send;
+            document.getElementById('clearButton').innerText = texts[language].clear;
+
+            const chatHistory = document.getElementById('chatHistory');
+            chatHistory.className = language === 'ar' ? 'rtl' : 'ltr';
+            
+            // Update the datalist options
+            const questionsList = document.getElementById('questionsList');
+            questionsList.innerHTML = '';
+            texts[language].questionList.forEach(question => {
+                const option = document.createElement('option');
+                option.value = question;
+                questionsList.appendChild(option);
+            });
+
+            recognition.lang = language === 'ar' ? 'ar' : 'en-US';
+        }
+
+        function normalizeArabic(text) {
+            return text.replace(/[\u064B-\u0652\u0670]/g, '') // Remove all diacritics
+                       .replace(/[\u0621-\u0622\u0623\u0624\u0625\u0626\u0627]/g, 'ا') // Normalize different forms of Alef
+                       .replace(/[\u0649\u064A]/g, 'ي') // Normalize Yaa
+                       .replace(/[\u0648\u0624]/g, 'و') // Normalize Waw
+                       .replace(/[\u0647\u0629]/g, 'ه'); // Normalize Haa and Taa Marbuta
+        }
+
+        function normalizeEnglish(text) {
+            return text.toLowerCase(); // Convert all letters to lowercase
+        }
+
+        function extractInfo(question) {
+    question = currentLanguage === 'ar' ? normalizeArabic(question.toLowerCase().trim()) : normalizeEnglish(question.toLowerCase().trim());
+    const langTexts = texts[currentLanguage];
+
+    // البحث في الإجابات الافتراضية
+    for (const key in langTexts.defaultResponses) {
+        if (question.includes(currentLanguage === 'ar' ? normalizeArabic(key.toLowerCase()) : normalizeEnglish(key.toLowerCase()))) {
+            return [langTexts.defaultResponses[key]];
+        }
+    }
+
+    // البحث في الإجابات المعرفة مسبقاً
+    let results = [];
+    langTexts.answers.forEach(answer => {
+        if (answer.name && question.includes(currentLanguage === 'ar' ? normalizeArabic(answer.name.split(" ")[0].toLowerCase()) : normalizeEnglish(answer.name.split(" ")[0].toLowerCase()))) {
+            results.push(`${answer.name} ${currentLanguage === 'ar' ? "هو" : "is"} ${answer.role}`);
+        } else if (answer.role && question.includes(currentLanguage === 'ar' ? normalizeArabic(answer.role.toLowerCase()) : normalizeEnglish(answer.role.toLowerCase()))) {
+            results.push(`${answer.role} ${currentLanguage === 'ar' ? "هو" : "is"} ${answer.name}`);
+        } else if (answer.key && question.includes(currentLanguage === 'ar' ? normalizeArabic(answer.key.toLowerCase()) : normalizeEnglish(answer.key.toLowerCase()))) {
+            if (Array.isArray(answer.text)) {
+                // إذا كان النص عبارة عن مصفوفة، قم بدمج النصوص وفصلها بعلامة جديدة
+                results.push(answer.text.map((line, index) => `${index + 1}. ${line}`).join('<br>'));
+            } else {
+                results.push(answer.text);
+            }
+        }
+    });
+
+    if (results.length === 0) {
+        results.push(currentLanguage === 'ar' ? "لا توجد نتائج مطابقة." : "No matching results.");
+    }
+
+    return results;
+}
+
+        document.getElementById('generateButton').onclick = function () {
+            const question = document.getElementById('searchField').value;
+            const chatHistory = document.getElementById('chatHistory');
+
+            const responses = extractInfo(question);
+            const responseHtml = responses.map(response => `<div class="chat-entry answer"><strong>${currentLanguage === 'ar' ? 'إجابة' : 'Answer'}:</strong> ${response}</div>`).join('');
+
+            chatHistory.innerHTML += `<div class="chat-entry"><strong>${currentLanguage === 'ar' ? 'سؤال' : 'Question'}:</strong> ${question}</div>`;
+            chatHistory.innerHTML += responseHtml;
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        };
+
+        document.getElementById('clearButton').onclick = function () {
+            document.getElementById('searchField').value = '';
+            document.getElementById('chatHistory').innerHTML = '';
+        };
+
+        // إضافة دعم لتحويل الصوت إلى نص
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        document.getElementById('voiceInputButton').onclick = function () {
+            recognition.start();
+        };
+
+        recognition.onresult = function (event) {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById('searchField').value = transcript;
+        };
+
+        recognition.onspeechend = function () {
+            recognition.stop();
+        };
+
+        recognition.onerror = function (event) {
+            console.error('Error occurred in recognition: ' + event.error);
+        };
+
+        setLanguage('ar');
+    </script>
+</body>
+</html>
